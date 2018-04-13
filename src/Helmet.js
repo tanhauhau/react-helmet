@@ -90,9 +90,15 @@ const Helmet = Component =>
         }
 
         shouldComponentUpdate(nextProps) {
-            const { children, ...props } = this.props;
-            const { children: newChildren, ...newProps } = nextProps;
-            return !deepEqual(this.mapChildrenToProps(children, props), this.mapChildrenToProps(newChildren, newProps));
+            if (!this.oldProps) {
+                const {children, ...props} = this.props;
+                this.oldProps = this.mapChildrenToProps(children, props);
+            }
+            const {children: newChildren, ...newProps} = nextProps;
+            this.newProps = this.mapChildrenToProps(newChildren, newProps);
+            const shouldUpdate = !deepEqual(this.oldProps, this.newProps);
+            this.oldProps = this.newProps;
+            return shouldUpdate;
         }
 
         mapNestedChildrenToProps(child, nestedChildren) {
@@ -263,14 +269,14 @@ const Helmet = Component =>
         }
 
         render() {
-            const {children, ...props} = this.props;
-            let newProps = {...props};
-
-            if (children) {
-                newProps = this.mapChildrenToProps(children, newProps);
+            if (!this.newProps) {
+                const {children: newChildren, ...newProps} = this.props;
+                this.oldProps = this.newProps = this.mapChildrenToProps(
+                    newChildren,
+                    newProps
+                );
             }
-
-            return <Component {...newProps} />;
+            return <Component {...this.newProps} />;
         }
     };
 
