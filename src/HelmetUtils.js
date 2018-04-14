@@ -44,12 +44,16 @@ const getTitleFromPropsList = propsList => {
         );
     }
 
+    if (innermostTitle) {
+        return innermostTitle;
+    }
+
     const innermostDefaultTitle = getInnermostProperty(
         propsList,
         HELMET_PROPS.DEFAULT_TITLE
     );
 
-    return innermostTitle || innermostDefaultTitle || undefined;
+    return innermostDefaultTitle || undefined;
 };
 
 const getOnChangeClientState = propsList => {
