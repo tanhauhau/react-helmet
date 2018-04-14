@@ -68,7 +68,7 @@ const getAttributesFromPropsList = (tagType, propsList) => {
         .filter(props => typeof props[tagType] !== "undefined")
         .map(props => props[tagType])
         .reduce((tagAttrs, current) => {
-            return {...tagAttrs, ...current};
+            return objectAssign(tagAttrs, current);
         }, {});
 };
 
