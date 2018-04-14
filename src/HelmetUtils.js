@@ -11,6 +11,8 @@ import {
     TAG_PROPERTIES
 } from "./HelmetConstants.js";
 
+const NOOP = () => {};
+
 const encodeSpecialCharacters = (str, encode = true) => {
     if (encode === false) {
         return String(str);
@@ -53,7 +55,7 @@ const getTitleFromPropsList = propsList => {
 const getOnChangeClientState = propsList => {
     return (
         getInnermostProperty(propsList, HELMET_PROPS.ON_CHANGE_CLIENT_STATE) ||
-        (() => {})
+        NOOP
     );
 };
 
