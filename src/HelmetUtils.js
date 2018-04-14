@@ -73,30 +73,23 @@ const getAttributesFromPropsList = (tagType, propsList) => {
 };
 
 const getBaseTagFromPropsList = (primaryAttributes, propsList) => {
-    return propsList
-        .filter(props => typeof props[TAG_NAMES.BASE] !== "undefined")
-        .map(props => props[TAG_NAMES.BASE])
-        .reverse()
-        .reduce((innermostBaseTag, tag) => {
-            if (!innermostBaseTag.length) {
-                const keys = Object.keys(tag);
-
-                for (let i = 0; i < keys.length; i++) {
-                    const attributeKey = keys[i];
-                    const lowerCaseAttributeKey = attributeKey.toLowerCase();
-
-                    if (
-                        primaryAttributes.indexOf(lowerCaseAttributeKey) !==
-                            -1 &&
-                        tag[lowerCaseAttributeKey]
-                    ) {
-                        return innermostBaseTag.concat(tag);
-                    }
-                }
+    for (let i = propsList.length - 1; i >= 0; i--) {
+        const tag = propsList[i][TAG_NAMES.BASE];
+        if (typeof tag === "undefined") {
+            continue;
+        }
+        const keys = Object.keys(tag);
+        for (let j = 0; j < keys.length; j++) {
+            const lowerCaseAttributeKey = keys[j].toLowerCase();
+            if (
+                primaryAttributes.indexOf(lowerCaseAttributeKey) !== -1 &&
+                tag[lowerCaseAttributeKey]
+            ) {
+                return [tag];
             }
-
-            return innermostBaseTag;
-        }, []);
+        }
+    }
+    return [];
 };
 
 const getTagsFromPropsList = (tagName, primaryAttributes, propsList) => {
