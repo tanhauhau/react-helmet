@@ -108,12 +108,14 @@ const getTagsFromPropsList = (tagName, primaryAttributes, propsList) => {
             if (Array.isArray(props[tagName])) {
                 return true;
             }
-            if (typeof props[tagName] !== "undefined") {
-                warn(
-                    `Helmet: ${tagName} should be of type "Array". Instead found type "${typeof props[
-                        tagName
-                    ]}"`
-                );
+            if (process.env.NODE_ENV !== "production") {
+                if (typeof props[tagName] !== "undefined") {
+                    warn(
+                        `Helmet: ${tagName} should be of type "Array". Instead found type "${typeof props[
+                            tagName
+                        ]}"`
+                    );
+                }
             }
             return false;
         })
