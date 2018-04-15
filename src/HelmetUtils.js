@@ -95,104 +95,94 @@ const getBaseTagFromPropsList = (primaryAttributes, propsList) => {
 const getTagsFromPropsList = (tagName, primaryAttributes, propsList) => {
     // Calculate list of tags, giving priority innermost component (end of the propslist)
     const approvedSeenTags = {};
-
-    return propsList
-        .filter(props => {
-            if (Array.isArray(props[tagName])) {
-                return true;
-            }
+    const approvedTags = [];
+    for (let i = propsList.length - 1; i >= 0; i--) {
+        const tags = propsList[i][tagName];
+        if (!Array.isArray(tags)) {
             if (process.env.NODE_ENV !== "production") {
-                if (typeof props[tagName] !== "undefined") {
+                if (typeof tags !== "undefined") {
                     warn(
-                        `Helmet: ${tagName} should be of type "Array". Instead found type "${typeof props[
-                            tagName
-                        ]}"`
+                        `Helmet: ${tagName} should be of type "Array". Instead found type "${typeof tags}"`
                     );
                 }
             }
-            return false;
-        })
-        .map(props => props[tagName])
-        .reverse()
-        .reduce((approvedTags, instanceTags) => {
-            const instanceSeenTags = {};
+            continue;
+        }
+        const instanceSeenTags = {};
 
-            instanceTags
-                .filter(tag => {
-                    let primaryAttributeKey;
-                    const keys = Object.keys(tag);
-                    for (let i = 0; i < keys.length; i++) {
-                        const attributeKey = keys[i];
-                        const lowerCaseAttributeKey = attributeKey.toLowerCase();
+        tags
+            .filter(tag => {
+                let primaryAttributeKey;
+                const keys = Object.keys(tag);
+                for (let j = 0; j < keys.length; j++) {
+                    const attributeKey = keys[j];
+                    const lowerCaseAttributeKey = attributeKey.toLowerCase();
 
-                        // Special rule with link tags, since rel and href are both primary tags, rel takes priority
-                        if (
-                            primaryAttributes.indexOf(lowerCaseAttributeKey) !==
-                                -1 &&
-                            !(
-                                primaryAttributeKey === TAG_PROPERTIES.REL &&
-                                tag[primaryAttributeKey].toLowerCase() ===
-                                    "canonical"
-                            ) &&
-                            !(
-                                lowerCaseAttributeKey === TAG_PROPERTIES.REL &&
-                                tag[lowerCaseAttributeKey].toLowerCase() ===
-                                    "stylesheet"
-                            )
-                        ) {
-                            primaryAttributeKey = lowerCaseAttributeKey;
-                        }
-                        // Special case for innerHTML which doesn't work lowercased
-                        if (
-                            primaryAttributes.indexOf(attributeKey) !== -1 &&
-                            (attributeKey === TAG_PROPERTIES.INNER_HTML ||
-                                attributeKey === TAG_PROPERTIES.CSS_TEXT ||
-                                attributeKey === TAG_PROPERTIES.ITEM_PROP)
-                        ) {
-                            primaryAttributeKey = attributeKey;
-                        }
+                    // Special rule with link tags, since rel and href are both primary tags, rel takes priority
+                    if (
+                        primaryAttributes.indexOf(lowerCaseAttributeKey) !==
+                            -1 &&
+                        !(
+                            primaryAttributeKey === TAG_PROPERTIES.REL &&
+                            tag[primaryAttributeKey].toLowerCase() ===
+                                "canonical"
+                        ) &&
+                        !(
+                            lowerCaseAttributeKey === TAG_PROPERTIES.REL &&
+                            tag[lowerCaseAttributeKey].toLowerCase() ===
+                                "stylesheet"
+                        )
+                    ) {
+                        primaryAttributeKey = lowerCaseAttributeKey;
                     }
-
-                    if (!primaryAttributeKey || !tag[primaryAttributeKey]) {
-                        return false;
+                    // Special case for innerHTML which doesn't work lowercased
+                    if (
+                        primaryAttributes.indexOf(attributeKey) !== -1 &&
+                        (attributeKey === TAG_PROPERTIES.INNER_HTML ||
+                            attributeKey === TAG_PROPERTIES.CSS_TEXT ||
+                            attributeKey === TAG_PROPERTIES.ITEM_PROP)
+                    ) {
+                        primaryAttributeKey = attributeKey;
                     }
+                }
 
-                    const value = tag[primaryAttributeKey].toLowerCase();
-
-                    if (!approvedSeenTags[primaryAttributeKey]) {
-                        approvedSeenTags[primaryAttributeKey] = {};
-                    }
-
-                    if (!instanceSeenTags[primaryAttributeKey]) {
-                        instanceSeenTags[primaryAttributeKey] = {};
-                    }
-
-                    if (!approvedSeenTags[primaryAttributeKey][value]) {
-                        instanceSeenTags[primaryAttributeKey][value] = true;
-                        return true;
-                    }
-
+                if (!primaryAttributeKey || !tag[primaryAttributeKey]) {
                     return false;
-                })
-                .reverse()
-                .forEach(tag => approvedTags.push(tag));
+                }
 
-            // Update seen tags with tags from this instance
-            const keys = Object.keys(instanceSeenTags);
-            for (let i = 0; i < keys.length; i++) {
-                const attributeKey = keys[i];
-                const tagUnion = objectAssign(
-                    {},
-                    approvedSeenTags[attributeKey],
-                    instanceSeenTags[attributeKey]
-                );
+                const value = tag[primaryAttributeKey].toLowerCase();
 
-                approvedSeenTags[attributeKey] = tagUnion;
-            }
+                if (!approvedSeenTags[primaryAttributeKey]) {
+                    approvedSeenTags[primaryAttributeKey] = {};
+                }
 
-            return approvedTags;
-        }, [])
-        .reverse();
+                if (!instanceSeenTags[primaryAttributeKey]) {
+                    instanceSeenTags[primaryAttributeKey] = {};
+                }
+
+                if (!approvedSeenTags[primaryAttributeKey][value]) {
+                    instanceSeenTags[primaryAttributeKey][value] = true;
+                    return true;
+                }
+
+                return false;
+            })
+            .reverse()
+            .forEach(tag => approvedTags.push(tag));
+
+        // Update seen tags with tags from this instance
+        const keys = Object.keys(instanceSeenTags);
+        for (let j = 0; j < keys.length; j++) {
+            const attributeKey = keys[j];
+            const tagUnion = objectAssign(
+                approvedSeenTags[attributeKey],
+                instanceSeenTags[attributeKey]
+            );
+
+            approvedSeenTags[attributeKey] = tagUnion;
+        }
+    }
+    return approvedTags.reverse();
 };
 
 const getInnermostProperty = (propsList, property) => {
